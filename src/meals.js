@@ -6,7 +6,7 @@
  * Creates a meal with a name and date.
  *
  * @param {string} name - Meal name (e.g., "Breakfast", "Lunch")
- * @param {string} date - Date of the meal (ISO format string)
+ * @param {string} [date] - Date of the meal (ISO format string). Defaults to today.
  * @returns {Meal} A meal object
  *
  * @typedef {Object} Meal
@@ -28,7 +28,7 @@ export function createMeal(name, date) {
   return {
     id: `meal-${mealIdCounter}`,
     name,
-    date,
+    date: date || new Date().toISOString().split('T')[0],
     items: [],
   };
 }
@@ -48,16 +48,14 @@ export function createMeal(name, date) {
 export function addMealItem(meal, productId, amount, product) {
   const ratio = amount / product.servingSize;
 
-  const itemNutrients = {
-    energy: product.nutrients.energy * ratio,
-    fat: product.nutrients.fat * ratio,
-    saturatedFat: product.nutrients.saturatedFat * ratio,
-    carbohydrates: product.nutrients.carbohydrates * ratio,
-    sugars: product.nutrients.sugars * ratio,
-    fiber: product.nutrients.fiber * ratio,
-    protein: product.nutrients.protein * ratio,
-    sodium: product.nutrients.sodium * ratio,
-  };
+  const itemNutrients = {};
+  for (const key of Object.keys(product.nutrients)) {
+    itemNutrients[key] = {
+      value: product.nutrients[key].value * ratio,
+      unit: product.nutrients[key].unit,
+      per: product.nutrients[key].per,
+    };
+  }
 
   meal.items.push({
     productId,
@@ -99,7 +97,9 @@ export function getMealTotal(meal) {
 
   for (const item of meal.items) {
     for (const key of Object.keys(total)) {
-      total[key] += item.nutrients[key] || 0;
+      if (item.nutrients[key] && item.nutrients[key].value !== undefined) {
+        total[key] += item.nutrients[key].value;
+      }
     }
   }
 
