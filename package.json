@@ -1,0 +1,9 @@
+{
+  "name": "nutri-scan-1l75x",
+  "version": "1.0.0",
+  "description": "Nutritional label scanner and meal planner",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
