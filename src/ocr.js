@@ -9,7 +9,7 @@
  * @param {string} imageData - Base64-encoded image data or URL
  * @param {Object} config - Configuration object
  * @param {string} config.endpoint - The OpenAI-compatible API endpoint URL
- * @param {string} config.key - The API key for authentication
+ * @param {string} config.apiKey - The API key for authentication
  * @param {string} [config.model] - The model to use (default: "gpt-4o")
  * @param {Function} [config.fetch] - Custom fetch function for testing
  * @returns {Promise<OCRResult>} A promise that resolves to an OCRResult object
@@ -17,10 +17,10 @@
  * @typedef {Object} OCRResult
  * @property {string} productName - Name of the product
  * @property {Object} nutrients - Nutritional information per serving
- * @property {Object} nutrients.energy - Energy info
- * @property {number} nutrients.energy.value - Value
- * @property {string} nutrients.energy.unit - Unit (e.g., "kcal")
- * @property {string} nutrients.energy.per - Per what (e.g., "100g")
+ * @property {Object} [nutrients.energy] - Energy info
+ * @property {number} [nutrients.energy.value] - Value
+ * @property {string} [nutrients.energy.unit] - Unit (e.g., "kcal")
+ * @property {string} [nutrients.energy.per] - Per what (e.g., "100g")
  * @property {Object} [nutrients.fat] - Fat info
  * @property {Object} [nutrients.saturatedFat] - Saturated fat info
  * @property {Object} [nutrients.carbohydrates] - Carbohydrates info
@@ -30,14 +30,14 @@
  * @property {Object} [nutrients.sodium] - Sodium info
  */
 export async function extractNutrition(imageData, config) {
-  const { endpoint, key, model = "gpt-4o", fetch: customFetch } = config;
+  const { endpoint, apiKey, model = "gpt-4o", fetch: customFetch } = config;
   const fetchFn = customFetch || fetch;
 
   const response = await fetchFn(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model,
@@ -63,5 +63,10 @@ export async function extractNutrition(imageData, config) {
 
   const data = await response.json();
   const content = data.choices[0].message.content;
-  return JSON.parse(content);
+
+  try {
+    return JSON.parse(content);
+  } catch {
+    throw new Error("Failed to parse AI response as JSON");
+  }
 }
